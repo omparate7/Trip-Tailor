@@ -35,12 +35,12 @@ This project was developed as part of the **CS2003 DBMS** course.
 
 ### 1) Import the database
 1. Create/import the database using:
-   - `/home/runner/work/Trip-Tailor/Trip-Tailor/database/trip_tailor.sql`
+   - `database/trip_tailor.sql`
 2. Confirm database name is `trip_tailor`.
 
 ### 2) Configure database connection
 Update DB credentials in:
-- `/home/runner/work/Trip-Tailor/Trip-Tailor/php/connection.php`
+- `php/connection.php`
 
 Default values in the repository:
 - host: `localhost`

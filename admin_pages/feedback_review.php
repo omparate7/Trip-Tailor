@@ -1,31 +1,37 @@
 <?php
-session_start();
-include 'connection.php';
-if (!isset($_SESSION['UserID'])) {
-    header("Location: login.php");
-    exit();
-}
-$userId = $_SESSION['UserID'];
+// Database connection
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "trip_tailor"; // Replace with your database name
 
-$userPrefQuery = "SELECT Pref_DestinationType FROM User WHERE UserID = $userId";
-$userPrefResult = $conn->query($userPrefQuery);
-$userPref = $userPrefResult->fetch_assoc()['Pref_DestinationType'];
+$conn = new mysqli($servername, $username, $password, $dbname);
 
-// Fetch destinations
-$destinationQuery = "SELECT DestinationID, DestinationName, DestinationLocation FROM Destination";
-if (isset($_GET['sort'])) {
-    $destinationQuery .= " WHERE DestinationType = '$userPref'";
+// Check connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
 }
-$destinationResult = $conn->query($destinationQuery);
+
+// Handle Delete Feedback Operation
+if (isset($_GET['delete_feedback'])) {
+    $feedback_id = intval($_GET['delete_feedback']);
+    $sql = "DELETE FROM Feedback WHERE FeedbackID = $feedback_id";
+    $conn->query($sql);
+}
+
+// Fetch Feedback Data
+$sql = "SELECT f.FeedbackID, f.Description, f.Rating, d.DestinationName 
+        FROM Feedback f 
+        JOIN Destination d ON f.DestinationID = d.DestinationID";
+$result = $conn->query($sql);
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Destinations</title>
+    <title>Feedback Review</title>
     <style>
         * {
             margin: 0;
@@ -45,6 +51,7 @@ $destinationResult = $conn->query($destinationQuery);
             padding-bottom: 3%;
         }
 
+        /* Main Container */
         .container {
             display: flex;
             background-color: white;
@@ -56,6 +63,7 @@ $destinationResult = $conn->query($destinationQuery);
             overflow: hidden;
         }
 
+        /* Sidebar */
         .sidebar {
             width: 25%;
             background-color: #21215E;
@@ -73,17 +81,23 @@ $destinationResult = $conn->query($destinationQuery);
             text-align: center;
         }
 
-        .sidebar .user-tools {
+        .user-tools {
             list-style: none;
-            width: 100%;
             padding: 0;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
-        .sidebar {
-            text-align: center;
+        .user-tools li {
+            margin: 20px 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
         }
 
-        .sidebar a {
+        .user-tools li a {
             background-color: transparent;
             border: 1px solid white;
             color: white;
@@ -93,21 +107,25 @@ $destinationResult = $conn->query($destinationQuery);
             font-weight: lighter;
             text-decoration: none;
             font-size: 1.15vw;
+            text-align: center;
             width: 80%;
-            display: inline-block;
+            display: block;
         }
 
-        .sidebar a:hover {
+        .user-tools li a:hover {
             background-color: white;
-            color: #21215E;
+            color: #2e2c72;
+            text-decoration: none;
         }
 
+        /* Main Content */
         .main-content {
             width: 75%;
             background-color: #ffffff;
             padding: 30px;
         }
 
+        /* Header */
         header {
             margin-bottom: 20px;
         }
@@ -123,6 +141,7 @@ $destinationResult = $conn->query($destinationQuery);
             color: #555;
         }
 
+        /* Table Styling */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -150,37 +169,20 @@ $destinationResult = $conn->query($destinationQuery);
             background-color: #e5f4f5;
         }
 
-        .select-btn {
-            display:flex ;
-            justify-self:center ;
-            color: #0957D0;
-            background-color: #EDF2FC;
+        .btn-delete {
+            color: white;
+            background-color: red;
             padding: 8px 16px;
             text-decoration: none;
             border-radius: 8px;
             font-size: 0.9rem;
-            border: none ;
         }
 
-        .select-btn:hover {
-            color: #21215E;
+        .btn-delete:hover {
+            background-color: darkred;
         }
 
-        .btn-sort {
-            display: flex ;
-            justify-self: end ;
-            color: #21215E;
-            padding: 10px 20px;
-            text-decoration: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            margin-bottom: 20px;
-        }
-
-        .btn-sort:hover {
-            background-color: #EDF2FC;
-        }
-
+        /* Responsive Design */
         @media (max-width: 1024px) {
             .container {
                 flex-direction: column;
@@ -205,48 +207,66 @@ $destinationResult = $conn->query($destinationQuery);
                 font-size: 0.9rem;
             }
 
-            .btn-sort {
+            .btn-delete {
                 font-size: 0.8rem;
                 padding: 6px 12px;
             }
         }
     </style>
 </head>
-
 <body>
     <div class="container">
+        <!-- Sidebar -->
         <div class="sidebar">
-            <h2>Destinations</h2>
-            <a href="../dashboard.php" >Back to Dashboard</a>
+            <h2>Trip-Tailor</h2>
+            <ul class="user-tools">
+                <li><a href="manage_destinations.php">Manage Destinations</a></li>
+                <li><a href="manage_users.php">Manage Users</a></li>
+                <li><a href="#">Review Feedback</a></li>
+            </ul>
         </div>
+
+        <!-- Main Content -->
         <div class="main-content">
-            <h1>Available Destinations</h1>
-            <a class="btn-sort" href="destinationlist.php?sort=1">Sort by Preferred Type</a>
+            <header>
+                <h1>Review Feedback</h1>
+                <p>View and manage user feedback on destinations.</p>
+            </header>
+
+            <!-- Feedback List -->
+            <h2>Feedback</h2>
             <table>
                 <thead>
                     <tr>
-                        <th>Name</th>
-                        <th>Location</th>
-                        <th>Action</th>
+                        <th>ID</th>
+                        <th>Description</th>
+                        <th>Rating</th>
+                        <th>Destination</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php while ($row = $destinationResult->fetch_assoc()): ?>
+                    <?php if ($result->num_rows > 0) {
+                        while ($row = $result->fetch_assoc()) { ?>
+                            <tr>
+                                <td><?= $row['FeedbackID'] ?></td>
+                                <td><?= $row['Description'] ?></td>
+                                <td><?= $row['Rating'] ?>/5</td>
+                                <td><?= $row['DestinationName'] ?></td>
+                                <td>
+                                    <a class="btn-delete" href="?delete_feedback=<?= $row['FeedbackID'] ?>">Delete</a>
+                                </td>
+                            </tr>
+                    <?php } } else { ?>
                         <tr>
-                            <td><?= $row['DestinationName'] ?></td>
-                            <td><?= $row['DestinationLocation'] ?></td>
-                            <td>
-                                <form action="adddestination.php" method="POST">
-                                    <input type="hidden" name="DestinationID" value="<?= $row['DestinationID'] ?>">
-                                    <button class="select-btn" type="submit">Select</button>
-                                </form>
-                            </td>
+                            <td colspan="5">No feedback available.</td>
                         </tr>
-                    <?php endwhile; ?>
+                    <?php } ?>
                 </tbody>
             </table>
         </div>
     </div>
 </body>
-
 </html>
+
+<?php $conn->close(); ?>

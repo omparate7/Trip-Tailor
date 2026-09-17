@@ -1,11 +1,9 @@
-/* General Reset */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-/* Body Styling */
 body {
     font-family: 'Arial', sans-serif;
     background-color: #e7f2f4;
@@ -20,16 +18,8 @@ body {
 }
 
 
-/* Container */
 .container {
-    /* display: flex;
-    background-color: white;
-    box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1);
-    border-radius: 20px;
-    width: 95%;
-    max-width: 1200px;
-    min-height: 90vh;
-    overflow: hidden; */
+    
     display: flex;
     background-color: white;
     box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1);
@@ -40,7 +30,6 @@ body {
     overflow: hidden;
 }
 
-/* Sidebar */
 .sidebar {
     width: 25%;
     background-color: #21215E;
@@ -53,9 +42,7 @@ body {
 }
 
 .sidebar h2 {
-    /* margin-bottom: 30px;
-    font-size: 2rem;
-    text-align: center; */
+    
     margin-bottom: 40px;
     padding-top: 20px;
     font-size: 3vw;
@@ -102,7 +89,6 @@ body {
     color: #21215E;
 }
 
-/* Main Content */
 .main-content {
     width: 75%;
     background-color: #ffffff;
@@ -112,7 +98,6 @@ body {
     gap: 2rem;
 }
 
-/* Header */
 header {
     text-align: center;
     margin-bottom: 20px;
@@ -129,7 +114,6 @@ header p {
     color: #666;
 }
 
-/* Feedback and Report Forms */
 .form-feedback {
     display: flex;
     flex-direction: column;
@@ -189,7 +173,6 @@ header p {
     transform: scale(1.05);
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
     .container {
         flex-direction: column;

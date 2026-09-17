@@ -12,20 +12,18 @@
         <h2 id="wlcm">Welcome Back!</h2>
         <p id="member">No account?</p>
         <a class="sign-up-btn" href="SignUp.html">Sign Up </a>
-        <p id="member"><a href="Admin_login.html">Admin Login</a></p>
+        <p id="member"><a href="admin_pages/Admin_login.html">Admin Login</a></p>
       </div>
 
       <div class="form-box account-box">
         <h2 id="account">Sign In</h2>
 
-        <!-- Display error message if authentication fails -->
         <?php if (isset($error_message)): ?>
         <p style="color: red; text-align: center">
           <?php echo $error_message; ?>
         </p>
         <?php endif; ?>
 
-        <!-- Form to capture email and password -->
         <form method="POST" action="php/login.php">
           <input
             type="email"

@@ -1,31 +1,39 @@
 <?php
-session_start();
-include 'connection.php';
-if (!isset($_SESSION['UserID'])) {
-    header("Location: login.php");
-    exit();
-}
-$userId = $_SESSION['UserID'];
+// Database connection
+$servername = "localhost";
+$username = "root"; // Replace with your DB username
+$password = ""; // Replace with your DB password
+$dbname = "trip_tailor"; // Replace with your database name
 
-$userPrefQuery = "SELECT Pref_DestinationType FROM User WHERE UserID = $userId";
-$userPrefResult = $conn->query($userPrefQuery);
-$userPref = $userPrefResult->fetch_assoc()['Pref_DestinationType'];
+$conn = new mysqli($servername, $username, $password, $dbname);
 
-// Fetch destinations
-$destinationQuery = "SELECT DestinationID, DestinationName, DestinationLocation FROM Destination";
-if (isset($_GET['sort'])) {
-    $destinationQuery .= " WHERE DestinationType = '$userPref'";
+// Check connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
 }
-$destinationResult = $conn->query($destinationQuery);
+
+// Delete user if requested
+if (isset($_GET['delete'])) {
+    $UserID = intval($_GET['delete']); // Get user ID from query string
+    $deleteQuery = "DELETE FROM User WHERE UserID = $UserID";
+    if ($conn->query($deleteQuery) === TRUE) {
+        $message = "User deleted successfully.";
+    } else {
+        $message = "Error deleting user: " . $conn->error;
+    }
+}
+
+// Fetch all users
+$query = "SELECT UserID, Name, Email, Pref_DestinationType, Pref_ActivityType FROM User";
+$result = $conn->query($query);
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Destinations</title>
+    <title>Manage Users</title>
     <style>
         * {
             margin: 0;
@@ -45,6 +53,7 @@ $destinationResult = $conn->query($destinationQuery);
             padding-bottom: 3%;
         }
 
+        /* Main Container */
         .container {
             display: flex;
             background-color: white;
@@ -56,6 +65,7 @@ $destinationResult = $conn->query($destinationQuery);
             overflow: hidden;
         }
 
+        /* Sidebar */
         .sidebar {
             width: 25%;
             background-color: #21215E;
@@ -73,17 +83,23 @@ $destinationResult = $conn->query($destinationQuery);
             text-align: center;
         }
 
-        .sidebar .user-tools {
+        .user-tools {
             list-style: none;
-            width: 100%;
             padding: 0;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
-        .sidebar {
-            text-align: center;
+        .user-tools li {
+            margin: 20px 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
         }
 
-        .sidebar a {
+        .user-tools li a {
             background-color: transparent;
             border: 1px solid white;
             color: white;
@@ -93,21 +109,25 @@ $destinationResult = $conn->query($destinationQuery);
             font-weight: lighter;
             text-decoration: none;
             font-size: 1.15vw;
+            text-align: center;
             width: 80%;
-            display: inline-block;
+            display: block;
         }
 
-        .sidebar a:hover {
+        .user-tools li a:hover {
             background-color: white;
-            color: #21215E;
+            color: #2e2c72;
+            text-decoration: none;
         }
 
+        /* Main Content */
         .main-content {
             width: 75%;
             background-color: #ffffff;
             padding: 30px;
         }
 
+        /* Header */
         header {
             margin-bottom: 20px;
         }
@@ -123,6 +143,7 @@ $destinationResult = $conn->query($destinationQuery);
             color: #555;
         }
 
+        /* Table Styling */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -150,37 +171,20 @@ $destinationResult = $conn->query($destinationQuery);
             background-color: #e5f4f5;
         }
 
-        .select-btn {
-            display:flex ;
-            justify-self:center ;
-            color: #0957D0;
-            background-color: #EDF2FC;
+        .btn-delete {
+            color: white;
+            background-color: red;
             padding: 8px 16px;
             text-decoration: none;
             border-radius: 8px;
             font-size: 0.9rem;
-            border: none ;
         }
 
-        .select-btn:hover {
-            color: #21215E;
+        .btn-delete:hover {
+            background-color: darkred;
         }
 
-        .btn-sort {
-            display: flex ;
-            justify-self: end ;
-            color: #21215E;
-            padding: 10px 20px;
-            text-decoration: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            margin-bottom: 20px;
-        }
-
-        .btn-sort:hover {
-            background-color: #EDF2FC;
-        }
-
+        /* Responsive Design */
         @media (max-width: 1024px) {
             .container {
                 flex-direction: column;
@@ -205,48 +209,70 @@ $destinationResult = $conn->query($destinationQuery);
                 font-size: 0.9rem;
             }
 
-            .btn-sort {
+            .btn-delete {
                 font-size: 0.8rem;
                 padding: 6px 12px;
             }
         }
     </style>
 </head>
-
 <body>
     <div class="container">
+        <!-- Sidebar -->
         <div class="sidebar">
-            <h2>Destinations</h2>
-            <a href="../dashboard.php" >Back to Dashboard</a>
+            <h2>Trip-Tailor</h2>
+            <ul class="user-tools">
+                <li><a href="admin_management.php">Manage Admins</a></li>
+                <li><a href="#">Manage Users</a></li>
+            </ul>
         </div>
+
+        <!-- Main Content -->
         <div class="main-content">
-            <h1>Available Destinations</h1>
-            <a class="btn-sort" href="destinationlist.php?sort=1">Sort by Preferred Type</a>
+            <header>
+                <h1>Manage Users</h1>
+                <p>View and manage registered users.</p>
+                <?php
+                if (isset($message)) {
+                    echo "<p style='color: green; font-weight: bold;'>$message</p>";
+                }
+                ?>
+            </header>
             <table>
                 <thead>
                     <tr>
+                        <th>User ID</th>
                         <th>Name</th>
-                        <th>Location</th>
-                        <th>Action</th>
+                        <th>Email</th>
+                        <th>Preferred Destination</th>
+                        <th>Preferred Activity</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php while ($row = $destinationResult->fetch_assoc()): ?>
-                        <tr>
-                            <td><?= $row['DestinationName'] ?></td>
-                            <td><?= $row['DestinationLocation'] ?></td>
-                            <td>
-                                <form action="adddestination.php" method="POST">
-                                    <input type="hidden" name="DestinationID" value="<?= $row['DestinationID'] ?>">
-                                    <button class="select-btn" type="submit">Select</button>
-                                </form>
-                            </td>
-                        </tr>
-                    <?php endwhile; ?>
+                    <?php
+                    if ($result->num_rows > 0) {
+                        while ($row = $result->fetch_assoc()) {
+                            echo "<tr>";
+                            echo "<td>" . $row['UserID'] . "</td>";
+                            echo "<td>" . $row['Name'] . "</td>";
+                            echo "<td>" . $row['Email'] . "</td>";
+                            echo "<td>" . $row['Pref_DestinationType'] . "</td>";
+                            echo "<td>" . $row['Pref_ActivityType'] . "</td>";
+                            echo "<td><a class='btn-delete' href='manage_users.php?delete=" . $row['UserID'] . "'>Delete</a></td>";
+                            echo "</tr>";
+                        }
+                    } else {
+                        echo "<tr><td colspan='6'>No users found.</td></tr>";
+                    }
+                    ?>
                 </tbody>
             </table>
         </div>
     </div>
 </body>
-
 </html>
+
+<?php
+$conn->close();
+?>
